@@ -1,0 +1,1703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADMIN PANEL | TELEGRAM COMMAND CENTER</title>
+    <meta name="description" content="Telegram Bot Admin Panel — Broadcast, Users, Full API Access">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=Space+Grotesk:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --c-bg:     #000508;
+            --c-glass:  rgba(6, 16, 30, 0.60);
+            --c-border: rgba(56, 189, 248, 0.30);
+            --c-accent: #38bdf8;
+            --c-purple: #c084fc;
+            --c-green:  #4ade80;
+            --c-red:    #f87171;
+            --c-amber:  #fbbf24;
+            --c-text:   #e2f0ff;
+            --c-muted:  #6b8aad;
+            --radius:   20px;
+            --transition: 0.3s cubic-bezier(.2,.9,.4,1.1);
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+
+        body {
+            background: var(--c-bg);
+            font-family: 'Inter', system-ui, sans-serif;
+            min-height: 100vh;
+            color: var(--c-text);
+            overflow-x: hidden;
+        }
+
+        /* ── BACKGROUND ── */
+        .bg-fx { position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden; }
+        .bg-fx .deep  { position:absolute; inset:0; background: radial-gradient(ellipse at 25% 35%, #020b1a 0%, #000508 100%); }
+        .bg-fx .glow1 { position:absolute; width:900px; height:900px; top:-200px; left:-300px; border-radius:50%; background: radial-gradient(circle, rgba(56,189,248,.07) 0%, transparent 70%); filter:blur(80px); animation: pulsate 18s infinite alternate; }
+        .bg-fx .glow2 { position:absolute; width:700px; height:700px; bottom:-200px; right:-200px; border-radius:50%; background: radial-gradient(circle, rgba(192,132,252,.06) 0%, transparent 70%); filter:blur(80px); animation: pulsate 22s infinite alternate-reverse; }
+        .bg-fx .grid  { position:absolute; inset:0;
+            background-image: linear-gradient(rgba(56,189,248,.08) 1px, transparent 1px), linear-gradient(90deg, rgba(56,189,248,.08) 1px, transparent 1px);
+            background-size: 60px 60px; opacity:.6; }
+        @keyframes pulsate { from { opacity:.4; transform:scale(1); } to { opacity:.8; transform:scale(1.3); } }
+
+        /* ── PARTICLES ── */
+        .particle { position:absolute; border-radius:50%; background: radial-gradient(circle,#38bdf8,transparent); opacity:0; animation: pfloat 14s infinite ease-in-out; }
+        @keyframes pfloat { 0%,100%{opacity:0;transform:translateY(100vh)scale(0)} 20%,80%{opacity:.35} 50%{opacity:.5;transform:translateY(30vh)scale(1)} }
+
+        /* ── LAYOUT ── */
+        .wrap { position:relative; z-index:2; padding:20px; max-width:2200px; margin:0 auto; }
+
+        /* ── GLASS ── */
+        .glass {
+            background: var(--c-glass);
+            backdrop-filter: blur(22px);
+            border: 1px solid var(--c-border);
+            border-radius: var(--radius);
+            box-shadow: 0 30px 50px -20px rgba(0,0,0,.85), inset 0 0 0 1px rgba(56,189,248,.12);
+            transition: var(--transition);
+        }
+        .glass:hover { border-color: rgba(56,189,248,.55); box-shadow: 0 40px 60px -25px rgba(0,0,0,.9), 0 0 40px rgba(56,189,248,.08), inset 0 0 0 1px rgba(56,189,248,.2); }
+
+        /* ── HEADER ── */
+        .header {
+            display:flex; justify-content:space-between; align-items:center;
+            flex-wrap:wrap; gap:16px; padding:18px 36px;
+            border-radius:60px; margin-bottom:24px;
+        }
+        .logo {
+            font-family: 'Space Grotesk', monospace; font-size:1.8rem; font-weight:800; letter-spacing:-1px;
+            background: linear-gradient(135deg,#fff,#38bdf8,#c084fc,#38bdf8); background-size:300% auto;
+            -webkit-background-clip:text; background-clip:text; color:transparent;
+            animation: shine 8s linear infinite;
+        }
+        @keyframes shine { 0%{background-position:0% center} 100%{background-position:300% center} }
+        .badge-pill { padding:8px 24px; border-radius:50px; font-size:.75rem; font-weight:700; letter-spacing:1.5px; background:rgba(10,20,40,.9); border:1px solid rgba(56,189,248,.4); color:var(--c-accent); }
+        .bot-selector-wrap { display:flex; align-items:center; gap:10px; }
+        .bot-selector-wrap select { background:#0a1628; border:1px solid var(--c-accent); color:#fff; padding:9px 18px; border-radius:40px; font-size:.82rem; cursor:pointer; font-family:inherit; min-width:200px; }
+
+        /* ── NAV ── */
+        .nav { display:flex; gap:8px; flex-wrap:wrap; padding:8px 16px; border-radius:50px; margin-bottom:24px; background:rgba(2,8,18,.6); backdrop-filter:blur(16px); border:1px solid rgba(56,189,248,.15); }
+        .nav-tab { padding:10px 22px; border-radius:40px; cursor:pointer; font-size:.82rem; font-weight:600; background:transparent; border:1px solid transparent; color:var(--c-muted); font-family:inherit; transition:var(--transition); white-space:nowrap; }
+        .nav-tab:hover  { background:rgba(56,189,248,.12); border-color:rgba(56,189,248,.4); color:#fff; transform:translateY(-2px); }
+        .nav-tab.active { background:linear-gradient(120deg,#0d2740,#051a2e); border-color:var(--c-accent); color:#fff; box-shadow:0 0 20px rgba(56,189,248,.35); }
+
+        /* ── TABS ── */
+        .tab-content { display:none; animation: tabRise .35s ease; }
+        .tab-content.active { display:block; }
+        @keyframes tabRise { from{opacity:0;transform:translateY(16px)scale(.98)} to{opacity:1;transform:translateY(0)scale(1)} }
+
+        /* ── STAT BAR ── */
+        .stats-bar { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:16px; margin-bottom:24px; }
+        .stat-card { padding:20px 12px; text-align:center; border-radius:var(--radius); background:rgba(4,12,24,.75); border:1px solid rgba(56,189,248,.2); transition:var(--transition); cursor:default; }
+        .stat-card:hover { transform:translateY(-6px); border-color:rgba(56,189,248,.6); box-shadow:0 0 30px rgba(56,189,248,.15); }
+        .stat-num { font-size:2rem; font-weight:800; font-family:'Space Grotesk'; background:linear-gradient(135deg,#38bdf8,#c084fc); -webkit-background-clip:text; background-clip:text; color:transparent; }
+        .stat-num.green  { background:linear-gradient(135deg,#4ade80,#22d3ee); -webkit-background-clip:text; background-clip:text; color:transparent; }
+        .stat-num.red    { background:linear-gradient(135deg,#f87171,#fb923c); -webkit-background-clip:text; background-clip:text; color:transparent; }
+        .stat-num.amber  { background:linear-gradient(135deg,#fbbf24,#f97316); -webkit-background-clip:text; background-clip:text; color:transparent; }
+        .stat-lbl { font-size:.6rem; text-transform:uppercase; letter-spacing:2px; color:var(--c-muted); margin-top:8px; font-weight:700; }
+
+        /* ── GRID ── */
+        .g2 { display:grid; grid-template-columns:repeat(auto-fit,minmax(420px,1fr)); gap:22px; margin-bottom:22px; }
+        .g3 { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:16px; margin-bottom:22px; }
+
+        /* ── CARD ── */
+        .card { padding:28px 30px; }
+        .card h3 { font-size:1.1rem; font-weight:700; font-family:'Space Grotesk'; margin-bottom:20px; border-left:3px solid var(--c-accent); padding-left:14px; color:#fff; }
+        .card h3 .sub { font-size:.7rem; color:var(--c-muted); font-weight:500; display:block; margin-top:2px; letter-spacing:1px; }
+
+        /* ── INPUTS ── */
+        .field { margin-bottom:18px; }
+        .field label { display:block; font-size:.65rem; text-transform:uppercase; letter-spacing:2.5px; font-weight:800; color:#7ab3ff; margin-bottom:7px; }
+        input, textarea, select {
+            width:100%; padding:13px 18px;
+            background:rgba(1,5,14,.95); border:1.5px solid #1e4060;
+            border-radius:24px; color:var(--c-text); font-size:.88rem;
+            font-family:'JetBrains Mono',monospace; transition:.25s ease;
+        }
+        input:focus, textarea:focus { outline:none; border-color:var(--c-accent); box-shadow:0 0 18px rgba(56,189,248,.25); transform:translateY(-1px); }
+        textarea { resize:vertical; min-height:90px; }
+        select { cursor:pointer; }
+
+        /* ── BUTTONS ── */
+        .btn {
+            display:inline-flex; align-items:center; gap:8px;
+            padding:11px 28px; border-radius:40px; font-weight:700; cursor:pointer;
+            font-family:inherit; font-size:.82rem; border:1px solid; transition:var(--transition);
+            position:relative; overflow:hidden; white-space:nowrap;
+        }
+        .btn::after { content:''; position:absolute; inset:0; background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent); transform:translateX(-100%); transition:.5s; }
+        .btn:hover::after { transform:translateX(100%); }
+        .btn:hover { transform:translateY(-2px); }
+        .btn:active { transform:translateY(0); }
+
+        .btn-primary  { background:linear-gradient(120deg,#0d2740,#051a2e); border-color:var(--c-accent); color:#e0f5ff; }
+        .btn-primary:hover  { box-shadow:0 0 22px rgba(56,189,248,.5); }
+        .btn-success  { background:linear-gradient(120deg,#0a3a20,#062914); border-color:var(--c-green); color:#dcfce7; }
+        .btn-success:hover  { box-shadow:0 0 20px rgba(74,222,128,.4); }
+        .btn-danger   { background:linear-gradient(120deg,#3a0a12,#290610); border-color:var(--c-red); color:#ffe4e4; }
+        .btn-danger:hover   { box-shadow:0 0 20px rgba(248,113,113,.4); }
+        .btn-warning  { background:linear-gradient(120deg,#3a2800,#291b00); border-color:var(--c-amber); color:#fff7d4; }
+        .btn-warning:hover  { box-shadow:0 0 20px rgba(251,191,36,.4); }
+        .btn-ghost    { background:transparent; border-color:rgba(56,189,248,.3); color:var(--c-muted); }
+        .btn-ghost:hover    { border-color:var(--c-accent); color:#fff; }
+        .btn-sm { padding:7px 18px; font-size:.75rem; }
+        .btn-block { width:100%; justify-content:center; }
+
+        .btn-row { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
+
+        /* ── SCROLL LIST ── */
+        .scroll-list { background:rgba(1,4,12,.85); border-radius:16px; padding:12px; max-height:320px; overflow-y:auto; border:1px solid rgba(56,189,248,.2); margin-top:14px; }
+        .scroll-list::-webkit-scrollbar { width:5px; }
+        .scroll-list::-webkit-scrollbar-track { background:#060d1a; border-radius:10px; }
+        .scroll-list::-webkit-scrollbar-thumb { background:var(--c-accent); border-radius:10px; }
+
+        /* ── ROWS ── */
+        .row { padding:9px 4px; border-bottom:1px solid rgba(56,189,248,.1); font-size:.75rem; font-family:monospace; display:flex; align-items:center; justify-content:space-between; gap:8px; }
+        .row:last-child { border-bottom:none; }
+        .row .info { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .row .meta { color:var(--c-muted); font-size:.68rem; }
+        .row.danger { color:var(--c-red); }
+
+        /* ── TAGS ── */
+        .tag { display:inline-block; padding:3px 12px; border-radius:20px; font-size:.68rem; font-weight:700; }
+        .tag-blue   { background:rgba(56,189,248,.15); border:1px solid rgba(56,189,248,.3); color:var(--c-accent); }
+        .tag-green  { background:rgba(74,222,128,.12); border:1px solid rgba(74,222,128,.3); color:var(--c-green); }
+        .tag-red    { background:rgba(248,113,113,.12); border:1px solid rgba(248,113,113,.3); color:var(--c-red); }
+        .tag-amber  { background:rgba(251,191,36,.12);  border:1px solid rgba(251,191,36,.3);  color:var(--c-amber); }
+        .tag-purple { background:rgba(192,132,252,.12); border:1px solid rgba(192,132,252,.3); color:var(--c-purple); }
+
+        /* ── LOG ── */
+        .log-panel { background:rgba(0,2,8,.97); border-radius:16px; padding:16px; font-family:'JetBrains Mono',monospace; font-size:.73rem; height:420px; overflow-y:auto; border:1px solid rgba(56,189,248,.25); }
+        .log-line { padding:6px 0; border-bottom:1px solid rgba(56,189,248,.08); color:#b8e8ff; animation:logIn .2s ease; }
+        .log-line.err { color:var(--c-red); }
+        .log-line.ok  { color:var(--c-green); }
+        .log-line.warn{ color:var(--c-amber); }
+        @keyframes logIn { from{opacity:0;transform:translateX(-8px)} to{opacity:1;transform:translateX(0)} }
+        .log-ts { color:#3fa8d4; margin-right:10px; font-weight:700; }
+
+        /* ── SETUP SCREEN ── */
+        .setup-center { max-width:520px; margin:60px auto; }
+        .setup-center .card { padding:40px; }
+
+        /* ── API EXPLORER ── */
+        .api-grid { display:grid; grid-template-columns:280px 1fr; gap:20px; }
+        .method-list-wrap { max-height:calc(100vh - 200px); overflow-y:auto; }
+        .method-list-wrap::-webkit-scrollbar { width:4px; }
+        .method-list-wrap::-webkit-scrollbar-thumb { background:var(--c-accent); border-radius:4px; }
+        .method-search { margin-bottom:12px; }
+        .method-btn { display:block; width:100%; text-align:left; padding:9px 14px; background:rgba(4,12,24,.8); border:1px solid rgba(56,189,248,.12); border-radius:10px; color:var(--c-muted); font-size:.76rem; cursor:pointer; margin-bottom:5px; transition:.2s; font-family:monospace; }
+        .method-btn:hover   { border-color:rgba(56,189,248,.5); color:#fff; background:rgba(10,25,45,.9); }
+        .method-btn.active  { border-color:var(--c-accent); color:var(--c-accent); background:rgba(56,189,248,.08); }
+        .method-btn .cat-label { display:inline-block; padding:1px 6px; border-radius:8px; font-size:.6rem; margin-left:6px; font-family:sans-serif; }
+        .api-panel { display:flex; flex-direction:column; gap:14px; }
+        .api-result { background:rgba(0,2,8,.97); border-radius:14px; padding:16px; font-family:'JetBrains Mono',monospace; font-size:.75rem; color:#9de8ff; border:1px solid rgba(56,189,248,.2); max-height:500px; overflow:auto; white-space:pre-wrap; word-break:break-all; }
+        .json-key   { color:#7dd3fc; }
+        .json-str   { color:#86efac; }
+        .json-num   { color:#fde68a; }
+        .json-bool  { color:#fb923c; }
+        .json-null  { color:#f9a8d4; }
+
+        /* ── BOT CARD ── */
+        .bot-card { background:rgba(6,14,26,.85); border:1px solid rgba(56,189,248,.18); border-radius:14px; padding:14px 16px; margin-bottom:10px; cursor:pointer; transition:.25s; }
+        .bot-card:hover { border-color:rgba(56,189,248,.5); transform:translateX(4px); }
+        .bot-card.sel   { border-color:var(--c-accent); background:rgba(56,189,248,.07); }
+
+        /* ── SPINNER ── */
+        .spin { display:inline-block; width:14px; height:14px; border:2px solid rgba(56,189,248,.4); border-top-color:var(--c-accent); border-radius:50%; animation:spin .7s linear infinite; }
+        @keyframes spin { to{transform:rotate(360deg)} }
+
+        /* ── PROGRESS BAR ── */
+        .progress { height:6px; background:rgba(56,189,248,.15); border-radius:10px; overflow:hidden; margin-top:10px; }
+        .progress-bar { height:100%; background:linear-gradient(90deg,var(--c-accent),var(--c-purple)); border-radius:10px; transition:width .3s; width:0%; }
+
+        /* ── HR ── */
+        hr { border:none; height:1px; background:linear-gradient(90deg,transparent,rgba(56,189,248,.4),rgba(192,132,252,.4),transparent); margin:22px 0; }
+
+        /* ── BROADCAST RESULT ── */
+        .bc-result { background:rgba(0,3,10,.9); border-radius:14px; padding:18px; border:1px solid rgba(56,189,248,.25); margin-top:14px; display:none; }
+        .bc-stat { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(56,189,248,.1); font-size:.8rem; }
+
+        /* ── RESPONSIVE ── */
+        @media(max-width:1100px) { .api-grid { grid-template-columns:1fr; } .method-list-wrap { max-height:200px; } }
+        @media(max-width:700px)  { .g2 { grid-template-columns:1fr; } .nav { gap:4px; } .nav-tab { padding:8px 14px; font-size:.75rem; } }
+
+        /* ── TOOLTIP ── */
+        [data-tip] { position:relative; cursor:help; }
+        [data-tip]::after { content:attr(data-tip); position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%); background:rgba(10,20,40,.97); border:1px solid rgba(56,189,248,.4); color:#c2e8ff; padding:5px 10px; border-radius:8px; font-size:.68rem; white-space:nowrap; pointer-events:none; opacity:0; transition:.2s; z-index:99; }
+        [data-tip]:hover::after { opacity:1; }
+
+        /* ── DB STATUS indicator ── */
+        .db-dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--c-red); margin-right:6px; }
+        .db-dot.ok { background:var(--c-green); }
+
+        /* ── PAGINATION ── */
+        .pagination { display:flex; gap:8px; align-items:center; margin-top:14px; flex-wrap:wrap; }
+        .page-btn { padding:6px 14px; border-radius:20px; background:rgba(4,12,24,.8); border:1px solid rgba(56,189,248,.2); color:var(--c-muted); cursor:pointer; font-size:.75rem; transition:.2s; }
+        .page-btn:hover, .page-btn.active { border-color:var(--c-accent); color:var(--c-accent); }
+        .page-info { color:var(--c-muted); font-size:.75rem; }
+    </style>
+</head>
+<body>
+
+<!-- Background -->
+<div class="bg-fx">
+    <div class="deep"></div>
+    <div class="glow1"></div>
+    <div class="glow2"></div>
+    <div class="grid"></div>
+    <div id="particles"></div>
+</div>
+
+<div class="wrap">
+
+    <!-- ════════════ SETUP SCREEN ════════════ -->
+    <div id="setupScreen">
+        <div class="header glass" style="justify-content:center; border-radius:60px;">
+            <div class="logo">ADMIN PANEL</div>
+            <div class="badge-pill">SECURE ACCESS</div>
+        </div>
+        <div class="setup-center">
+            <div class="glass card">
+                <h3>BOT AUTHENTICATION<span class="sub">OTP SENT TO YOUR TELEGRAM</span></h3>
+                <div class="field">
+                    <label>BOT TOKEN</label>
+                    <input type="password" id="botTokenInput" placeholder="1234567890:ABCdefGHIjklm...">
+                </div>
+                <div class="field">
+                    <label>OWNER TELEGRAM ID</label>
+                    <input type="text" id="ownerIdInput" placeholder="5612494162">
+                </div>
+                <button id="sendOtpBtn" class="btn btn-primary btn-block">SEND VERIFICATION CODE</button>
+                <div id="otpSection" style="display:none; margin-top:22px;">
+                    <hr>
+                    <div class="field">
+                        <label>OTP CODE</label>
+                        <input type="text" id="otpCodeInput" placeholder="000000" maxlength="6" style="text-align:center; font-size:1.6rem; letter-spacing:10px; font-weight:800;">
+                    </div>
+                    <button id="verifyOtpBtn" class="btn btn-success btn-block">VERIFY & LOGIN</button>
+                </div>
+                <div id="setupMsg" style="margin-top:14px; font-size:.8rem; text-align:center; color:var(--c-amber);"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════════ DASHBOARD ════════════ -->
+    <div id="adminDashboard" style="display:none;">
+
+        <!-- Header -->
+        <div class="header glass" style="border-radius:60px;">
+            <div class="logo">ADMIN PANEL</div>
+            <div class="badge-pill" id="ownerBadge">OWNER: ---</div>
+            <div class="bot-selector-wrap">
+                <select id="botSelector"><option value="">-- Select Bot --</option></select>
+                <button id="addBotBtn" class="btn btn-success btn-sm">+ ADD BOT</button>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <span class="db-dot" id="dbDot"></span><span id="dbLabel" style="font-size:.72rem; color:var(--c-muted);">DB</span>
+            </div>
+            <button id="logoutBtn" class="btn btn-ghost btn-sm">LOGOUT</button>
+        </div>
+
+        <!-- Nav -->
+        <div class="nav">
+            <div class="nav-tab active" data-tab="dashboard">📊 DASHBOARD</div>
+            <div class="nav-tab" data-tab="users">👥 USERS</div>
+            <div class="nav-tab" data-tab="broadcast">📡 BROADCAST</div>
+            <div class="nav-tab" data-tab="messages">✉️ MESSAGES</div>
+            <div class="nav-tab" data-tab="security">🛡️ SECURITY</div>
+            <div class="nav-tab" data-tab="api">⚡ API EXPLORER</div>
+            <div class="nav-tab" data-tab="bots">🤖 BOTS</div>
+            <div class="nav-tab" data-tab="settings">⚙️ SETTINGS</div>
+            <div class="nav-tab" data-tab="logs">📋 LOGS</div>
+        </div>
+
+        <!-- ── TAB: DASHBOARD ── -->
+        <div id="tab-dashboard" class="tab-content active">
+            <div class="stats-bar">
+                <div class="stat-card"><div class="stat-num" id="s-bot">-</div><div class="stat-lbl">BOT</div></div>
+                <div class="stat-card"><div class="stat-num" id="s-total">0</div><div class="stat-lbl">STORED USERS</div></div>
+                <div class="stat-card"><div class="stat-num green" id="s-active">0</div><div class="stat-lbl">ACTIVE</div></div>
+                <div class="stat-card"><div class="stat-num red" id="s-blocked">0</div><div class="stat-lbl">BLOCKED</div></div>
+                <div class="stat-card"><div class="stat-num green" id="s-bcsuccess">0</div><div class="stat-lbl">BC SENT</div></div>
+                <div class="stat-card"><div class="stat-num red" id="s-bcfail">0</div><div class="stat-lbl">BC FAILED</div></div>
+                <div class="stat-card"><div class="stat-num amber" id="s-uptime">0h 0m</div><div class="stat-lbl">SESSION</div></div>
+            </div>
+            <div class="g2">
+                <div class="glass card">
+                    <h3>RECENT USERS <span class="sub">FROM MONGODB — UPDATED BY WEBHOOK</span></h3>
+                    <div class="scroll-list" id="recentUsersList"><span class="tag tag-blue">loading...</span></div>
+                    <div class="btn-row">
+                        <button id="refreshDashBtn" class="btn btn-ghost btn-sm">🔄 REFRESH</button>
+                    </div>
+                </div>
+                <div class="glass card">
+                    <h3>BLOCKED USERS <span class="sub">AUTO-DETECTED ON 403 RESPONSE</span></h3>
+                    <div class="scroll-list" id="blockedUsersList"><span class="tag tag-blue">loading...</span></div>
+                    <div class="btn-row">
+                        <button id="refreshBlockedBtn" class="btn btn-ghost btn-sm">🔄 REFRESH</button>
+                    </div>
+                </div>
+            </div>
+            <div class="glass card">
+                <h3>RECENT BROADCASTS <span class="sub">LAST 10</span></h3>
+                <div class="scroll-list" id="broadcastLogList"><span class="tag tag-blue">none yet</span></div>
+            </div>
+        </div>
+
+        <!-- ── TAB: USERS ── -->
+        <div id="tab-users" class="tab-content">
+            <div class="glass card" style="margin-bottom:22px;">
+                <h3>USER DATABASE <span class="sub">ALL USERS STORED VIA WEBHOOK</span></h3>
+                <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:12px;">
+                    <select id="userFilterSel" style="width:auto; border-radius:30px; padding:9px 16px;">
+                        <option value="all">All Users</option>
+                        <option value="active">Active Only</option>
+                        <option value="blocked">Blocked Only</option>
+                    </select>
+                    <button id="loadUsersBtn" class="btn btn-primary btn-sm">LOAD / REFRESH</button>
+                    <span id="userCountLbl" style="color:var(--c-muted); font-size:.78rem; margin-left:8px;"></span>
+                </div>
+                <div class="scroll-list" id="allUsersList" style="max-height:500px;"><span class="tag tag-blue">click load</span></div>
+                <div class="pagination" id="userPagination"></div>
+            </div>
+            <div class="g2">
+                <div class="glass card">
+                    <h3>BLACKLIST USER</h3>
+                    <div class="field"><label>USER ID</label><input type="text" id="banUserId" placeholder="Telegram user ID"></div>
+                    <div class="field"><label>REASON (optional)</label><input type="text" id="banReason" placeholder="spam, abuse..."></div>
+                    <div class="btn-row">
+                        <button id="banUserBtn" class="btn btn-danger">⛔ BLACKLIST</button>
+                        <button id="unbanUserBtn" class="btn btn-success">✅ REMOVE</button>
+                    </div>
+                    <div id="banResultMsg" style="margin-top:10px; font-size:.78rem; color:var(--c-amber);"></div>
+                </div>
+                <div class="glass card">
+                    <h3>BLACKLIST <span class="sub">USERS BLOCKED FROM WEBHOOK PROCESSING</span></h3>
+                    <div class="scroll-list" id="banListContainer"><span class="tag tag-blue">loading...</span></div>
+                    <button id="refreshBanBtn" class="btn btn-ghost btn-sm" style="margin-top:12px;">🔄 REFRESH</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── TAB: BROADCAST ── -->
+        <div id="tab-broadcast" class="tab-content">
+            <div class="g2">
+                <div class="glass card">
+                    <h3>MASS BROADCAST <span class="sub">SENDS TO ALL NON-BLOCKED USERS IN DB</span></h3>
+                    <div class="field">
+                        <label>MESSAGE</label>
+                        <textarea id="bcMessage" rows="5" placeholder="Your broadcast message..."></textarea>
+                    </div>
+                    <div class="field">
+                        <label>PARSE MODE</label>
+                        <select id="bcParseMode" style="border-radius:24px;">
+                            <option value="">Plain text</option>
+                            <option value="Markdown">Markdown</option>
+                            <option value="MarkdownV2">MarkdownV2</option>
+                            <option value="HTML">HTML</option>
+                        </select>
+                    </div>
+                    <div id="bcUserCount" style="font-size:.78rem; color:var(--c-muted); margin-bottom:12px;">Loading user count...</div>
+                    <button id="runBroadcastBtn" class="btn btn-primary btn-block">📡 BROADCAST TO ALL</button>
+                    <div class="progress" id="bcProgress" style="display:none;"><div class="progress-bar" id="bcProgressBar"></div></div>
+                    <div class="bc-result" id="bcResult">
+                        <div class="bc-stat"><span>✅ Sent</span><span id="r-sent">0</span></div>
+                        <div class="bc-stat"><span>❌ Failed</span><span id="r-failed">0</span></div>
+                        <div class="bc-stat"><span>🚫 Newly Blocked</span><span id="r-blocked">0</span></div>
+                        <div class="bc-stat"><span>📊 Total</span><span id="r-total">0</span></div>
+                    </div>
+                </div>
+                <div class="glass card">
+                    <h3>CUSTOM BROADCAST <span class="sub">SEND TO SPECIFIC IDs</span></h3>
+                    <div class="field">
+                        <label>USER IDs (comma separated)</label>
+                        <textarea id="customIds" rows="3" placeholder="5612494162, 9876543210, 1122334455"></textarea>
+                    </div>
+                    <div class="field">
+                        <label>MESSAGE</label>
+                        <textarea id="customBcMsg" rows="4" placeholder="Your custom message..."></textarea>
+                    </div>
+                    <div class="field">
+                        <label>PARSE MODE</label>
+                        <select id="customParseMode" style="border-radius:24px;">
+                            <option value="">Plain text</option>
+                            <option value="Markdown">Markdown</option>
+                            <option value="MarkdownV2">MarkdownV2</option>
+                            <option value="HTML">HTML</option>
+                        </select>
+                    </div>
+                    <button id="runCustomBcBtn" class="btn btn-warning btn-block">📨 SEND CUSTOM</button>
+                    <div id="customBcResult" style="margin-top:12px; font-size:.78rem; color:var(--c-muted);"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── TAB: MESSAGES ── -->
+        <div id="tab-messages" class="tab-content">
+            <div class="g2">
+                <div class="glass card">
+                    <h3>SEND MESSAGE</h3>
+                    <div class="field"><label>RECIPIENT ID</label><input type="text" id="dmTarget" placeholder="Telegram user/chat ID"></div>
+                    <div class="field"><label>MESSAGE</label><textarea id="dmText" rows="4" placeholder="Your message..."></textarea></div>
+                    <div class="field">
+                        <label>PARSE MODE</label>
+                        <select id="dmParseMode" style="border-radius:24px;">
+                            <option value="">Plain text</option>
+                            <option value="Markdown">Markdown</option>
+                            <option value="MarkdownV2">MarkdownV2</option>
+                            <option value="HTML">HTML</option>
+                        </select>
+                    </div>
+                    <button id="sendDmBtn" class="btn btn-primary btn-block">SEND</button>
+                    <div id="dmResult" style="margin-top:10px; font-size:.78rem; color:var(--c-muted);"></div>
+                </div>
+                <div class="glass card">
+                    <h3>FORWARD MESSAGE</h3>
+                    <div class="field"><label>FROM CHAT ID</label><input type="text" id="fwdFrom" placeholder="Source chat ID"></div>
+                    <div class="field"><label>MESSAGE ID</label><input type="text" id="fwdMsgId" placeholder="Message ID to forward"></div>
+                    <div class="field"><label>TO CHAT ID</label><input type="text" id="fwdTo" placeholder="Destination chat ID"></div>
+                    <button id="forwardBtn" class="btn btn-primary btn-block">FORWARD</button>
+                    <hr>
+                    <h3 style="margin-top:0;">DELETE MESSAGE</h3>
+                    <div class="field"><label>CHAT ID</label><input type="text" id="delChatId" placeholder="Chat ID"></div>
+                    <div class="field"><label>MESSAGE ID</label><input type="text" id="delMsgId" placeholder="Message ID"></div>
+                    <button id="deleteMsgBtn" class="btn btn-danger btn-block">DELETE</button>
+                    <div id="msgActionResult" style="margin-top:10px; font-size:.78rem;"></div>
+                </div>
+            </div>
+            <div class="g2">
+                <div class="glass card">
+                    <h3>PIN / UNPIN</h3>
+                    <div class="field"><label>CHAT ID</label><input type="text" id="pinChatId" placeholder="Chat ID"></div>
+                    <div class="field"><label>MESSAGE ID</label><input type="text" id="pinMsgId" placeholder="Message ID"></div>
+                    <div class="btn-row">
+                        <button id="pinBtn" class="btn btn-primary">📌 PIN</button>
+                        <button id="unpinBtn" class="btn btn-ghost">UNPIN</button>
+                        <button id="unpinAllBtn" class="btn btn-danger">UNPIN ALL</button>
+                    </div>
+                </div>
+                <div class="glass card">
+                    <h3>CHAT INFO</h3>
+                    <div class="field"><label>CHAT ID</label><input type="text" id="chatInfoId" placeholder="@username or ID"></div>
+                    <div class="btn-row">
+                        <button id="getChatBtn" class="btn btn-primary">GET CHAT</button>
+                        <button id="getChatAdminsBtn" class="btn btn-ghost">GET ADMINS</button>
+                        <button id="getMemberCountBtn" class="btn btn-ghost">COUNT</button>
+                    </div>
+                    <div class="api-result" id="chatInfoResult" style="margin-top:12px; max-height:200px; display:none;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── TAB: SECURITY ── -->
+        <div id="tab-security" class="tab-content">
+            <div class="g2">
+                <div class="glass card">
+                    <h3>CO-ADMINISTRATORS <span class="sub">STORED IN MONGODB</span></h3>
+                    <div class="field"><label>USER ID</label><input type="text" id="coAdminId" placeholder="Telegram ID"></div>
+                    <div class="btn-row">
+                        <button id="promoteBtn" class="btn btn-success">PROMOTE</button>
+                        <button id="demoteBtn" class="btn btn-danger">DEMOTE</button>
+                        <button id="listCoAdminsBtn" class="btn btn-ghost">REFRESH</button>
+                    </div>
+                    <div class="scroll-list" id="coAdminList" style="margin-top:14px;"><span class="tag tag-blue">none</span></div>
+                </div>
+                <div class="glass card">
+                    <h3>BLACKLIST MANAGER <span class="sub">INTERNAL BAN — IGNORES WEBHOOK MSGS</span></h3>
+                    <div class="scroll-list" id="secBanList"><span class="tag tag-blue">none</span></div>
+                    <button id="secRefreshBanBtn" class="btn btn-ghost btn-sm" style="margin-top:12px;">🔄 REFRESH</button>
+                </div>
+            </div>
+            <div class="g2">
+                <div class="glass card">
+                    <h3>RESTRICT MEMBER <span class="sub">FOR GROUP CHATS</span></h3>
+                    <div class="field"><label>CHAT ID</label><input type="text" id="restrictChatId" placeholder="Group/Supergroup ID"></div>
+                    <div class="field"><label>USER ID</label><input type="text" id="restrictUid" placeholder="User ID to restrict"></div>
+                    <div class="field"><label>UNTIL (unix timestamp, 0=forever)</label><input type="text" id="restrictUntil" placeholder="0" value="0"></div>
+                    <div class="btn-row">
+                        <button id="muteBtn" class="btn btn-warning">MUTE</button>
+                        <button id="unmuteBtn" class="btn btn-success">UNMUTE</button>
+                        <button id="kickBtn" class="btn btn-danger">KICK</button>
+                    </div>
+                    <div id="restrictResult" style="margin-top:10px; font-size:.78rem;"></div>
+                </div>
+                <div class="glass card">
+                    <h3>PROMOTE ADMIN <span class="sub">FOR GROUP CHATS</span></h3>
+                    <div class="field"><label>CHAT ID</label><input type="text" id="promoteChatId" placeholder="Group/Supergroup ID"></div>
+                    <div class="field"><label>USER ID</label><input type="text" id="promoteUid" placeholder="User ID to promote"></div>
+                    <div class="field"><label>CUSTOM TITLE</label><input type="text" id="promoteTitle" placeholder="e.g. Moderator"></div>
+                    <div class="btn-row">
+                        <button id="promoteMemberBtn" class="btn btn-primary">PROMOTE</button>
+                        <button id="setTitleBtn" class="btn btn-ghost">SET TITLE</button>
+                    </div>
+                    <div id="promoteResult" style="margin-top:10px; font-size:.78rem;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── TAB: API EXPLORER ── -->
+        <div id="tab-api" class="tab-content">
+            <div class="glass card" style="margin-bottom:18px;">
+                <h3>FULL TELEGRAM BOT API EXPLORER <span class="sub">ALL OFFICIAL METHODS — LIVE EXECUTION</span></h3>
+            </div>
+            <div class="api-grid">
+                <!-- Left: method list -->
+                <div class="glass card" style="padding:20px;">
+                    <div class="field method-search"><input type="text" id="methodSearch" placeholder="Search method..." style="border-radius:30px;"></div>
+                    <div class="method-list-wrap" id="methodListWrap"></div>
+                </div>
+                <!-- Right: executor -->
+                <div class="glass card api-panel">
+                    <div>
+                        <h3 id="apiMethodTitle">SELECT A METHOD</h3>
+                        <div class="field">
+                            <label>PARAMETERS (JSON)</label>
+                            <textarea id="apiParams" rows="8" placeholder='{"chat_id": "123456789", "text": "Hello!"}'></textarea>
+                        </div>
+                        <div class="field">
+                            <label>DESCRIPTION</label>
+                            <div id="apiDesc" style="font-size:.75rem; color:var(--c-muted); background:rgba(0,3,10,.7); border-radius:12px; padding:10px; min-height:40px;"></div>
+                        </div>
+                        <button id="runApiBtn" class="btn btn-primary btn-block">▶ EXECUTE</button>
+                    </div>
+                    <div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <span style="font-size:.75rem; color:var(--c-muted);">RESPONSE</span>
+                            <button id="copyResultBtn" class="btn btn-ghost btn-sm">COPY</button>
+                        </div>
+                        <div class="api-result" id="apiResult">// Result will appear here</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── TAB: BOTS ── -->
+        <div id="tab-bots" class="tab-content">
+            <div class="g2">
+                <div class="glass card">
+                    <h3>ADD BOT</h3>
+                    <div class="field"><label>BOT TOKEN</label><input type="text" id="newBotToken" placeholder="Bot Token"></div>
+                    <div class="field"><label>DISPLAY NAME</label><input type="text" id="newBotName" placeholder="My Bot"></div>
+                    <button id="confirmAddBotBtn" class="btn btn-success btn-block">+ VERIFY & ADD</button>
+                    <div id="addBotMsg" style="margin-top:10px; font-size:.78rem; color:var(--c-amber);"></div>
+                    <hr>
+                    <h3>ALL BOTS</h3>
+                    <div id="botsListContainer"><span class="tag tag-blue">no bots yet</span></div>
+                </div>
+                <div class="glass card">
+                    <h3>BOT DETAILS</h3>
+                    <div id="currentBotInfo" style="background:rgba(0,3,10,.8); border-radius:14px; padding:18px;">
+                        <span class="tag tag-blue">select a bot</span>
+                    </div>
+                    <div class="btn-row" style="margin-top:16px;">
+                        <button id="switchBotBtn" class="btn btn-primary">SWITCH TO BOT</button>
+                        <button id="getBotInfoBtn" class="btn btn-ghost">REFRESH INFO</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── TAB: SETTINGS ── -->
+        <div id="tab-settings" class="tab-content">
+            <div class="g2">
+                <div class="glass card">
+                    <h3>WEBHOOK <span class="sub">TELEGRAM → YOUR SERVER</span></h3>
+                    <div class="field"><label>WEBHOOK URL</label><input type="text" id="webhookUrl" placeholder="https://yourdomain.com/webhook/TOKEN"></div>
+                    <div class="btn-row">
+                        <button id="autoWebhookBtn" class="btn btn-success">⚡ AUTO SETUP</button>
+                        <button id="setWebhookBtn" class="btn btn-primary">SET</button>
+                        <button id="delWebhookBtn" class="btn btn-danger">REMOVE</button>
+                        <button id="chkWebhookBtn" class="btn btn-ghost">STATUS</button>
+                    </div>
+                    <div class="api-result" id="webhookResult" style="margin-top:12px; display:none;"></div>
+                </div>
+                <div class="glass card">
+                    <h3>BOT COMMANDS</h3>
+                    <div class="field">
+                        <label>COMMANDS (one per line: command - description)</label>
+                        <textarea id="commandsInput" rows="6" placeholder="start - Start the bot&#10;help - Show help&#10;info - Bot info"></textarea>
+                    </div>
+                    <button id="setCommandsBtn" class="btn btn-primary btn-block">UPDATE COMMANDS</button>
+                    <div id="commandsResult" style="margin-top:10px; font-size:.78rem;"></div>
+                </div>
+            </div>
+            <div class="g2">
+                <div class="glass card">
+                    <h3>BOT PROFILE</h3>
+                    <div class="field"><label>NAME</label><input type="text" id="botNameInput" placeholder="Bot display name"></div>
+                    <div class="field"><label>SHORT DESCRIPTION</label><input type="text" id="botShortDesc" placeholder="Short description"></div>
+                    <div class="field"><label>DESCRIPTION</label><textarea id="botDescInput" rows="3" placeholder="Full description"></textarea></div>
+                    <div class="btn-row">
+                        <button id="setBotNameBtn" class="btn btn-primary">SET NAME</button>
+                        <button id="setBotDescBtn" class="btn btn-ghost">SET DESC</button>
+                        <button id="getBotDescBtn" class="btn btn-ghost">GET INFO</button>
+                    </div>
+                    <div id="profileResult" style="margin-top:10px; font-size:.78rem;"></div>
+                </div>
+                <div class="glass card">
+                    <h3>CHAT SETTINGS</h3>
+                    <div class="field"><label>CHAT ID</label><input type="text" id="chatSettingsId" placeholder="Group/Channel ID"></div>
+                    <div class="field"><label>TITLE</label><input type="text" id="chatTitle" placeholder="New title"></div>
+                    <div class="field"><label>DESCRIPTION</label><input type="text" id="chatDesc" placeholder="New description"></div>
+                    <div class="btn-row">
+                        <button id="setChatTitleBtn" class="btn btn-primary">SET TITLE</button>
+                        <button id="setChatDescBtn" class="btn btn-ghost">SET DESC</button>
+                        <button id="exportInviteBtn" class="btn btn-success">EXPORT INVITE</button>
+                    </div>
+                    <div id="chatSettingsResult" style="margin-top:10px; font-size:.78rem;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── TAB: LOGS ── -->
+        <div id="tab-logs" class="tab-content">
+            <div class="glass card">
+                <h3>SYSTEM LOG</h3>
+                <div id="logArea" class="log-panel">
+                    <div class="log-line"><span class="log-ts">[SYS]</span>Panel initialized</div>
+                </div>
+                <div class="btn-row" style="margin-top:14px;">
+                    <button id="refreshStatsBtn" class="btn btn-ghost btn-sm">🔄 REFRESH STATS</button>
+                    <button id="clearLogBtn" class="btn btn-danger btn-sm">🗑 CLEAR</button>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /adminDashboard -->
+</div><!-- /wrap -->
+
+<script>
+// ════════════════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════════════════
+let BOT_TOKEN   = null;
+let OWNER_ID    = null;
+let SESSION     = null;
+let botUsername = null;
+let sessionStart = Date.now();
+let botsDB      = [];
+let currentBotIdx = -1;
+let uptimeTimer = null;
+let currentMethodSelected = null;
+let userPage = 1;
+
+// ════════════════════════════════════════════════════════════
+//  UTILS
+// ════════════════════════════════════════════════════════════
+async function api(endpoint, body = {}) {
+    const r = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-session': SESSION || '' },
+        body: JSON.stringify(body)
+    });
+    return r.json();
+}
+
+async function tg(method, params = {}) {
+    return api(`/tg/${method}`, { botToken: BOT_TOKEN, ...params });
+}
+
+function log(msg, type = '') {
+    const c   = document.getElementById('logArea');
+    if (!c) return;
+    const el  = document.createElement('div');
+    el.className = `log-line ${type}`;
+    el.innerHTML = `<span class="log-ts">[${new Date().toLocaleTimeString()}]</span> ${escHtml(msg)}`;
+    c.appendChild(el);
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    if (c.children.length > 400) c.removeChild(c.children[0]);
+}
+
+function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function setElText(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = val;
+}
+
+function showMsg(id, msg, ok = true) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.color = ok ? 'var(--c-green)' : 'var(--c-red)';
+    el.textContent = msg;
+    setTimeout(() => { el.textContent = ''; }, 5000);
+}
+
+function syntaxHighlight(json) {
+    if (typeof json !== 'string') json = JSON.stringify(json, null, 2);
+    return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function(m) {
+        let cls = 'json-num';
+        if (/^"/.test(m)) { if (/:$/.test(m)) cls = 'json-key'; else cls = 'json-str'; }
+        else if (/true|false/.test(m)) cls = 'json-bool';
+        else if (/null/.test(m)) cls = 'json-null';
+        return `<span class="${cls}">${escHtml(m)}</span>`;
+    });
+}
+
+function updateUptime() {
+    const e = Math.floor((Date.now() - sessionStart) / 1000);
+    const h = Math.floor(e / 3600), m = Math.floor((e % 3600) / 60);
+    setElText('s-uptime', `${h}h ${m}m`);
+}
+
+// ════════════════════════════════════════════════════════════
+//  AUTH
+// ════════════════════════════════════════════════════════════
+document.getElementById('sendOtpBtn').addEventListener('click', async () => {
+    const token = document.getElementById('botTokenInput').value.trim();
+    const owner = document.getElementById('ownerIdInput').value.trim();
+    if (!token || !owner) { setElText('setupMsg', 'Token and Owner ID required'); return; }
+    BOT_TOKEN = token; OWNER_ID = owner;
+
+    const btn = document.getElementById('sendOtpBtn');
+    btn.innerHTML = '<span class="spin"></span> SENDING...';
+    btn.disabled = true;
+
+    try {
+        const r = await api('/hidden/send-otp', { botToken: token, ownerId: owner, secretKey: 'PANEL_AUTH' });
+        if (r.error && !r.success) throw new Error(r.error);
+        setElText('setupMsg', '✓ OTP sent to your Telegram');
+        document.getElementById('otpSection').style.display = 'block';
+        log('OTP sent');
+    } catch (e) {
+        setElText('setupMsg', '❌ ' + e.message);
+        BOT_TOKEN = null;
+    } finally {
+        btn.innerHTML = 'SEND VERIFICATION CODE';
+        btn.disabled = false;
+    }
+});
+
+document.getElementById('verifyOtpBtn').addEventListener('click', async () => {
+    const otp = document.getElementById('otpCodeInput').value.trim();
+    if (!otp) return;
+
+    const btn = document.getElementById('verifyOtpBtn');
+    btn.innerHTML = '<span class="spin"></span> VERIFYING...';
+    btn.disabled = true;
+
+    try {
+        const r = await api('/hidden/verify-otp', { otp });
+        if (!r.success) throw new Error(r.error || 'Invalid OTP');
+        SESSION = r.adminSession;
+
+        // Get bot info
+        const botInfo = await api('/api/bot-info', { botToken: BOT_TOKEN });
+        if (!botInfo.ok) throw new Error('Invalid bot token');
+        botUsername = botInfo.result.username;
+
+        setElText('setupMsg', `✓ Verified! @${botUsername}`);
+        await new Promise(r => setTimeout(r, 600));
+        launchDashboard(botInfo.result);
+    } catch (e) {
+        setElText('setupMsg', '❌ ' + e.message);
+    } finally {
+        btn.innerHTML = 'VERIFY & LOGIN';
+        btn.disabled = false;
+    }
+});
+
+async function launchDashboard(botResult) {
+    document.getElementById('setupScreen').style.display = 'none';
+    document.getElementById('adminDashboard').style.display = 'block';
+
+    setElText('ownerBadge', `OWNER: ${OWNER_ID}`);
+    setElText('s-bot', `@${botResult.username}`);
+
+    loadBots();
+    if (!botsDB.some(b => b.token === BOT_TOKEN)) {
+        botsDB.push({ id: Date.now(), token: BOT_TOKEN, name: botResult.username, ownerId: OWNER_ID, username: botResult.username, addedAt: new Date().toISOString() });
+        saveBots();
+    }
+    currentBotIdx = botsDB.findIndex(b => b.token === BOT_TOKEN);
+    renderBotSelector();
+    initTabs();
+    initMethodList();
+    await checkHealth();
+    await loadDashboard();
+
+    uptimeTimer = setInterval(() => updateUptime(), 30000);
+    updateUptime();
+    log(`Session active | @${botResult.username}`, 'ok');
+}
+
+// ════════════════════════════════════════════════════════════
+//  HEALTH CHECK
+// ════════════════════════════════════════════════════════════
+async function checkHealth() {
+    try {
+        const r = await fetch('/api/health');
+        const d = await r.json();
+        const dot = document.getElementById('dbDot');
+        const lbl = document.getElementById('dbLabel');
+        if (d.db) {
+            dot.className = 'db-dot ok';
+            lbl.textContent = 'DB CONNECTED';
+            lbl.style.color = 'var(--c-green)';
+        } else {
+            dot.className = 'db-dot';
+            lbl.textContent = 'DB OFFLINE';
+            lbl.style.color = 'var(--c-red)';
+            log('⚠ MongoDB not connected — set MONGODB_URI env var', 'warn');
+        }
+    } catch (e) {}
+}
+
+// ════════════════════════════════════════════════════════════
+//  DASHBOARD
+// ════════════════════════════════════════════════════════════
+async function loadDashboard() {
+    try {
+        const r = await api('/api/stats', { botToken: BOT_TOKEN });
+        if (r.ok) {
+            setElText('s-total',     r.total       ?? 0);
+            setElText('s-active',    r.active      ?? 0);
+            setElText('s-blocked',   r.blocked     ?? 0);
+            setElText('s-bcsuccess', r.broadcastSuccess ?? 0);
+            setElText('s-bcfail',    r.broadcastFail    ?? 0);
+
+            // User count label on broadcast tab
+            const bcLbl = document.getElementById('bcUserCount');
+            if (bcLbl) bcLbl.textContent = `${r.active ?? 0} active users will receive this message`;
+        }
+    } catch (e) { log('Stats error: ' + e.message, 'err'); }
+
+    loadRecentUsers();
+    loadBlockedUsers();
+    loadBroadcastLogs();
+}
+
+async function loadRecentUsers() {
+    const r = await api('/api/users', { botToken: BOT_TOKEN, page: 1, limit: 30, filter: 'active' });
+    const container = document.getElementById('recentUsersList');
+    if (!container) return;
+    if (!r.ok || !r.users?.length) {
+        container.innerHTML = '<span class="tag tag-amber">No users yet — set webhook first</span>';
+        return;
+    }
+    container.innerHTML = r.users.map(u => `
+        <div class="row">
+            <span class="info">✦ ${escHtml(u.userId)} → ${escHtml(u.username ? '@' + u.username : (u.firstName || u.userId))}</span>
+            <span class="meta">${new Date(u.lastSeen).toLocaleDateString()}</span>
+        </div>`).join('');
+}
+
+async function loadBlockedUsers() {
+    const r = await api('/api/users', { botToken: BOT_TOKEN, page: 1, limit: 30, filter: 'blocked' });
+    const container = document.getElementById('blockedUsersList');
+    if (!container) return;
+    if (!r.ok || !r.users?.length) {
+        container.innerHTML = '<span class="tag tag-green">No blocked users</span>';
+        return;
+    }
+    container.innerHTML = r.users.map(u => `
+        <div class="row danger">
+            <span class="info">⛔ ${escHtml(u.userId)} → ${escHtml(u.username ? '@' + u.username : (u.firstName || u.userId))}</span>
+            <span class="meta">${new Date(u.lastSeen).toLocaleDateString()}</span>
+        </div>`).join('');
+}
+
+async function loadBroadcastLogs() {
+    const r = await api('/api/broadcast-logs', { botToken: BOT_TOKEN });
+    const container = document.getElementById('broadcastLogList');
+    if (!container) return;
+    if (!r.ok || !r.logs?.length) { container.innerHTML = '<span class="tag tag-blue">No broadcasts yet</span>'; return; }
+    container.innerHTML = r.logs.map(l => `
+        <div class="row">
+            <span class="info">📡 ${escHtml(l.messageText?.substring(0, 50) ?? '')}...</span>
+            <span class="meta" style="white-space:nowrap;">✅${l.successCount} ❌${l.failCount} 🚫${l.blockedCount} · ${new Date(l.sentAt).toLocaleString()}</span>
+        </div>`).join('');
+}
+
+// ════════════════════════════════════════════════════════════
+//  USERS TAB
+// ════════════════════════════════════════════════════════════
+async function loadUsers(page = 1) {
+    userPage = page;
+    const filter  = document.getElementById('userFilterSel')?.value || 'all';
+    const container = document.getElementById('allUsersList');
+    if (!container) return;
+    container.innerHTML = '<span class="tag tag-blue"><span class="spin"></span> Loading...</span>';
+
+    const r = await api('/api/users', { botToken: BOT_TOKEN, page, limit: 100, filter });
+    if (!r.ok) { container.innerHTML = `<span class="tag tag-red">${r.error}</span>`; return; }
+
+    setElText('userCountLbl', `${r.total.toLocaleString()} users | Page ${r.page}/${r.pages}`);
+
+    if (!r.users?.length) { container.innerHTML = '<span class="tag tag-amber">No users found</span>'; return; }
+
+    container.innerHTML = r.users.map(u => `
+        <div class="row">
+            <span class="info">
+                ${u.blocked ? '⛔' : '✦'} 
+                <strong>${escHtml(u.userId)}</strong> 
+                ${u.username ? `@${escHtml(u.username)}` : ''} 
+                ${escHtml(u.firstName || '')} ${escHtml(u.lastName || '')}
+            </span>
+            <span class="meta" style="white-space:nowrap;">
+                ${u.blocked ? '<span class="tag tag-red">blocked</span>' : '<span class="tag tag-green">active</span>'}
+                · ${new Date(u.lastSeen).toLocaleDateString()}
+            </span>
+        </div>`).join('');
+
+    // Pagination
+    const pg = document.getElementById('userPagination');
+    if (!pg) return;
+    pg.innerHTML = '';
+    for (let i = 1; i <= Math.min(r.pages, 20); i++) {
+        const btn = document.createElement('button');
+        btn.className = `page-btn${i === page ? ' active' : ''}`;
+        btn.textContent = i;
+        btn.onclick = () => loadUsers(i);
+        pg.appendChild(btn);
+    }
+}
+
+async function loadBanList() {
+    const r = await api('/api/banned-users', { botToken: BOT_TOKEN });
+    ['banListContainer', 'secBanList'].forEach(id => {
+        const c = document.getElementById(id);
+        if (!c) return;
+        if (!r.ok || !r.users?.length) { c.innerHTML = '<span class="tag tag-green">None</span>'; return; }
+        c.innerHTML = r.users.map(u => `<div class="row danger">⛔ ${escHtml(u.userId)} <span class="meta">${u.reason || ''} · ${new Date(u.addedAt).toLocaleDateString()}</span></div>`).join('');
+    });
+}
+
+document.getElementById('loadUsersBtn')?.addEventListener('click', () => loadUsers(1));
+document.getElementById('refreshBanBtn')?.addEventListener('click', loadBanList);
+document.getElementById('secRefreshBanBtn')?.addEventListener('click', loadBanList);
+
+document.getElementById('banUserBtn')?.addEventListener('click', async () => {
+    const uid    = document.getElementById('banUserId')?.value.trim();
+    const reason = document.getElementById('banReason')?.value.trim();
+    if (!uid) return;
+    const r = await api('/api/ban-user', { botToken: BOT_TOKEN, userId: uid, reason });
+    showMsg('banResultMsg', r.ok ? '⛔ User blacklisted' : '❌ ' + r.error, r.ok);
+    if (r.ok) { log(`Blacklisted user ${uid}`, 'warn'); loadBanList(); }
+});
+
+document.getElementById('unbanUserBtn')?.addEventListener('click', async () => {
+    const uid = document.getElementById('banUserId')?.value.trim();
+    if (!uid) return;
+    const r = await api('/api/unban-user', { botToken: BOT_TOKEN, userId: uid });
+    showMsg('banResultMsg', r.ok ? '✅ Removed from blacklist' : '❌ ' + r.error, r.ok);
+    if (r.ok) { log(`Unblacklisted user ${uid}`, 'ok'); loadBanList(); }
+});
+
+// ════════════════════════════════════════════════════════════
+//  BROADCAST
+// ════════════════════════════════════════════════════════════
+document.getElementById('runBroadcastBtn')?.addEventListener('click', async () => {
+    const msg       = document.getElementById('bcMessage')?.value?.trim();
+    const parseMode = document.getElementById('bcParseMode')?.value;
+    if (!msg) { log('Message required', 'err'); return; }
+
+    const btn = document.getElementById('runBroadcastBtn');
+    btn.innerHTML = '<span class="spin"></span> BROADCASTING...';
+    btn.disabled = true;
+
+    const prog = document.getElementById('bcProgress');
+    const bar  = document.getElementById('bcProgressBar');
+    if (prog) { prog.style.display = 'block'; bar.style.width = '10%'; }
+
+    log('Starting broadcast...');
+
+    try {
+        const r = await api('/api/broadcast', { botToken: BOT_TOKEN, message: msg, parseMode: parseMode || undefined });
+        if (prog) { bar.style.width = '100%'; }
+
+        const res = document.getElementById('bcResult');
+        if (res) {
+            res.style.display = 'block';
+            setElText('r-sent',    r.success    ?? 0);
+            setElText('r-failed',  r.failed     ?? 0);
+            setElText('r-blocked', r.newlyBlocked ?? 0);
+            setElText('r-total',   r.total       ?? 0);
+        }
+
+        if (r.ok) {
+            log(`✅ Broadcast done: ${r.success} sent, ${r.failed} failed, ${r.newlyBlocked} newly blocked`, 'ok');
+            await loadDashboard();
+        } else {
+            log('❌ Broadcast error: ' + r.error, 'err');
+        }
+    } catch (e) {
+        log('❌ ' + e.message, 'err');
+    } finally {
+        btn.innerHTML = '📡 BROADCAST TO ALL';
+        btn.disabled = false;
+        setTimeout(() => { if (prog) prog.style.display = 'none'; if (bar) bar.style.width = '0%'; }, 2000);
+    }
+});
+
+document.getElementById('runCustomBcBtn')?.addEventListener('click', async () => {
+    const idsRaw    = document.getElementById('customIds')?.value || '';
+    const msg       = document.getElementById('customBcMsg')?.value?.trim();
+    const parseMode = document.getElementById('customParseMode')?.value;
+    const ids = idsRaw.split(/[\s,]+/).map(s => s.trim()).filter(s => s);
+    if (!ids.length || !msg) { log('IDs and message required', 'err'); return; }
+
+    let ok = 0, fail = 0;
+    const btn = document.getElementById('runCustomBcBtn');
+    btn.innerHTML = '<span class="spin"></span> SENDING...';
+    btn.disabled = true;
+
+    for (const chatId of ids) {
+        try {
+            const r = await api('/api/send-message', { botToken: BOT_TOKEN, chatId, text: msg, parseMode: parseMode || undefined });
+            if (r.ok) ok++; else { fail++; log(`Failed ${chatId}: ${r.description}`, 'err'); }
+        } catch (e) { fail++; }
+        await new Promise(r => setTimeout(r, 50));
+    }
+
+    document.getElementById('customBcResult').textContent = `✅ ${ok} sent · ❌ ${fail} failed`;
+    log(`Custom broadcast: ${ok} sent, ${fail} failed`, ok ? 'ok' : 'err');
+    btn.innerHTML = '📨 SEND CUSTOM';
+    btn.disabled = false;
+});
+
+// ════════════════════════════════════════════════════════════
+//  MESSAGES TAB
+// ════════════════════════════════════════════════════════════
+document.getElementById('sendDmBtn')?.addEventListener('click', async () => {
+    const chatId    = document.getElementById('dmTarget')?.value.trim();
+    const text      = document.getElementById('dmText')?.value.trim();
+    const parseMode = document.getElementById('dmParseMode')?.value;
+    if (!chatId || !text) return;
+    const r = await api('/api/send-message', { botToken: BOT_TOKEN, chatId, text, parseMode: parseMode || undefined });
+    setElText('dmResult', r.ok ? '✅ Sent' : '❌ ' + (r.description || r.error || 'Error'));
+    log(r.ok ? `Sent to ${chatId}` : `Failed to ${chatId}: ${r.description}`, r.ok ? 'ok' : 'err');
+});
+
+document.getElementById('forwardBtn')?.addEventListener('click', async () => {
+    const fromId = document.getElementById('fwdFrom')?.value.trim();
+    const msgId  = document.getElementById('fwdMsgId')?.value.trim();
+    const toId   = document.getElementById('fwdTo')?.value.trim();
+    if (!fromId || !msgId || !toId) return;
+    const r = await tg('forwardMessage', { from_chat_id: fromId, message_id: parseInt(msgId), chat_id: toId });
+    setElText('msgActionResult', r.ok ? '✅ Forwarded' : '❌ ' + (r.description || 'Error'));
+    log(r.ok ? 'Message forwarded' : 'Forward failed: ' + r.description, r.ok ? 'ok' : 'err');
+});
+
+document.getElementById('deleteMsgBtn')?.addEventListener('click', async () => {
+    const chatId = document.getElementById('delChatId')?.value.trim();
+    const msgId  = document.getElementById('delMsgId')?.value.trim();
+    if (!chatId || !msgId) return;
+    const r = await tg('deleteMessage', { chat_id: chatId, message_id: parseInt(msgId) });
+    setElText('msgActionResult', r.ok ? '✅ Deleted' : '❌ ' + (r.description || 'Error'));
+    log(r.ok ? 'Message deleted' : 'Delete failed: ' + r.description, r.ok ? 'ok' : 'err');
+});
+
+document.getElementById('pinBtn')?.addEventListener('click', async () => {
+    const chat = document.getElementById('pinChatId')?.value.trim();
+    const msg  = document.getElementById('pinMsgId')?.value.trim();
+    if (!chat || !msg) return;
+    const r = await tg('pinChatMessage', { chat_id: chat, message_id: parseInt(msg) });
+    log(r.ok ? 'Pinned' : 'Pin failed: ' + r.description, r.ok ? 'ok' : 'err');
+});
+
+document.getElementById('unpinBtn')?.addEventListener('click', async () => {
+    const chat = document.getElementById('pinChatId')?.value.trim();
+    const msg  = document.getElementById('pinMsgId')?.value.trim();
+    const r = await tg('unpinChatMessage', { chat_id: chat, message_id: parseInt(msg) });
+    log(r.ok ? 'Unpinned' : 'Unpin failed: ' + r.description, r.ok ? 'ok' : 'err');
+});
+
+document.getElementById('unpinAllBtn')?.addEventListener('click', async () => {
+    const chat = document.getElementById('pinChatId')?.value.trim();
+    if (!chat) return;
+    const r = await tg('unpinAllChatMessages', { chat_id: chat });
+    log(r.ok ? 'All unpinned' : 'Error: ' + r.description, r.ok ? 'ok' : 'err');
+});
+
+document.getElementById('getChatBtn')?.addEventListener('click', async () => {
+    const id = document.getElementById('chatInfoId')?.value.trim(); if (!id) return;
+    const r = await tg('getChat', { chat_id: id });
+    const el = document.getElementById('chatInfoResult');
+    el.style.display = 'block';
+    el.innerHTML = syntaxHighlight(r);
+});
+
+document.getElementById('getChatAdminsBtn')?.addEventListener('click', async () => {
+    const id = document.getElementById('chatInfoId')?.value.trim(); if (!id) return;
+    const r = await tg('getChatAdministrators', { chat_id: id });
+    const el = document.getElementById('chatInfoResult');
+    el.style.display = 'block';
+    el.innerHTML = syntaxHighlight(r);
+});
+
+document.getElementById('getMemberCountBtn')?.addEventListener('click', async () => {
+    const id = document.getElementById('chatInfoId')?.value.trim(); if (!id) return;
+    const r = await tg('getChatMemberCount', { chat_id: id });
+    const el = document.getElementById('chatInfoResult');
+    el.style.display = 'block';
+    el.innerHTML = syntaxHighlight(r);
+});
+
+// ════════════════════════════════════════════════════════════
+//  SECURITY TAB
+// ════════════════════════════════════════════════════════════
+async function loadCoAdmins() {
+    const r = await api('/api/list-coadmins', { botToken: BOT_TOKEN });
+    const c = document.getElementById('coAdminList');
+    if (!c) return;
+    if (!r.ok || !r.admins?.length) { c.innerHTML = '<span class="tag tag-blue">None</span>'; return; }
+    c.innerHTML = r.admins.map(a => `<div class="row">👑 ${escHtml(a.userId)}</div>`).join('');
+}
+
+document.getElementById('promoteBtn')?.addEventListener('click', async () => {
+    const uid = document.getElementById('coAdminId')?.value.trim();
+    if (!uid) return;
+    await api('/api/add-coadmin', { botToken: BOT_TOKEN, userId: uid });
+    log(`Promoted ${uid}`, 'ok'); loadCoAdmins();
+});
+
+document.getElementById('demoteBtn')?.addEventListener('click', async () => {
+    const uid = document.getElementById('coAdminId')?.value.trim();
+    if (!uid) return;
+    await api('/api/remove-coadmin', { botToken: BOT_TOKEN, userId: uid });
+    log(`Demoted ${uid}`, 'warn'); loadCoAdmins();
+});
+
+document.getElementById('listCoAdminsBtn')?.addEventListener('click', loadCoAdmins);
+
+document.getElementById('muteBtn')?.addEventListener('click', async () => {
+    const chat  = document.getElementById('restrictChatId')?.value.trim();
+    const uid   = document.getElementById('restrictUid')?.value.trim();
+    const until = parseInt(document.getElementById('restrictUntil')?.value || '0');
+    if (!chat || !uid) return;
+    const r = await tg('restrictChatMember', { chat_id: chat, user_id: uid, permissions: { can_send_messages: false }, until_date: until || 0 });
+    setElText('restrictResult', r.ok ? '✅ Muted' : '❌ ' + (r.description || 'Error'));
+});
+
+document.getElementById('unmuteBtn')?.addEventListener('click', async () => {
+    const chat = document.getElementById('restrictChatId')?.value.trim();
+    const uid  = document.getElementById('restrictUid')?.value.trim();
+    if (!chat || !uid) return;
+    const r = await tg('restrictChatMember', { chat_id: chat, user_id: uid, permissions: { can_send_messages: true, can_send_media_messages: true, can_send_polls: true, can_send_other_messages: true, can_add_web_page_previews: true } });
+    setElText('restrictResult', r.ok ? '✅ Unmuted' : '❌ ' + (r.description || 'Error'));
+});
+
+document.getElementById('kickBtn')?.addEventListener('click', async () => {
+    const chat = document.getElementById('restrictChatId')?.value.trim();
+    const uid  = document.getElementById('restrictUid')?.value.trim();
+    if (!chat || !uid) return;
+    const r = await tg('banChatMember', { chat_id: chat, user_id: uid });
+    setElText('restrictResult', r.ok ? '✅ Kicked' : '❌ ' + (r.description || 'Error'));
+    log(r.ok ? `Kicked ${uid} from ${chat}` : 'Kick failed: ' + r.description, r.ok ? 'ok' : 'err');
+});
+
+document.getElementById('promoteMemberBtn')?.addEventListener('click', async () => {
+    const chat = document.getElementById('promoteChatId')?.value.trim();
+    const uid  = document.getElementById('promoteUid')?.value.trim();
+    if (!chat || !uid) return;
+    const r = await tg('promoteChatMember', { chat_id: chat, user_id: uid, can_manage_chat: true, can_delete_messages: true, can_restrict_members: true, can_pin_messages: true });
+    setElText('promoteResult', r.ok ? '✅ Promoted' : '❌ ' + (r.description || 'Error'));
+});
+
+document.getElementById('setTitleBtn')?.addEventListener('click', async () => {
+    const chat  = document.getElementById('promoteChatId')?.value.trim();
+    const uid   = document.getElementById('promoteUid')?.value.trim();
+    const title = document.getElementById('promoteTitle')?.value.trim();
+    if (!chat || !uid || !title) return;
+    const r = await tg('setChatAdministratorCustomTitle', { chat_id: chat, user_id: uid, custom_title: title });
+    setElText('promoteResult', r.ok ? '✅ Title set' : '❌ ' + (r.description || 'Error'));
+});
+
+// ════════════════════════════════════════════════════════════
+//  API EXPLORER
+// ════════════════════════════════════════════════════════════
+const TG_METHODS = [
+    // Core
+    { method:'getMe', cat:'core', desc:'Returns basic info about the bot.' },
+    { method:'logOut', cat:'core', desc:'Log out from the cloud Bot API server.' },
+    { method:'close', cat:'core', desc:'Close the bot instance before moving it to another server.' },
+    // Messages
+    { method:'sendMessage', cat:'msg', desc:'Send text message. Required: chat_id, text. Optional: parse_mode, reply_markup.', sample:'{"chat_id":"","text":"Hello!"}' },
+    { method:'forwardMessage', cat:'msg', desc:'Forward a message. Required: chat_id, from_chat_id, message_id.', sample:'{"chat_id":"","from_chat_id":"","message_id":0}' },
+    { method:'copyMessage', cat:'msg', desc:'Copy a message without forwarding link. Required: chat_id, from_chat_id, message_id.', sample:'{"chat_id":"","from_chat_id":"","message_id":0}' },
+    { method:'copyMessages', cat:'msg', desc:'Copy multiple messages. Required: chat_id, from_chat_id, message_ids array.', sample:'{"chat_id":"","from_chat_id":"","message_ids":[0]}' },
+    { method:'forwardMessages', cat:'msg', desc:'Forward multiple messages. Required: chat_id, from_chat_id, message_ids.', sample:'{"chat_id":"","from_chat_id":"","message_ids":[0]}' },
+    { method:'sendPhoto', cat:'media', desc:'Send photo. Required: chat_id, photo (URL or file_id).', sample:'{"chat_id":"","photo":"","caption":""}' },
+    { method:'sendAudio', cat:'media', desc:'Send audio file. Required: chat_id, audio.', sample:'{"chat_id":"","audio":""}' },
+    { method:'sendDocument', cat:'media', desc:'Send document. Required: chat_id, document.', sample:'{"chat_id":"","document":""}' },
+    { method:'sendVideo', cat:'media', desc:'Send video. Required: chat_id, video.', sample:'{"chat_id":"","video":""}' },
+    { method:'sendAnimation', cat:'media', desc:'Send GIF/animation. Required: chat_id, animation.', sample:'{"chat_id":"","animation":""}' },
+    { method:'sendVoice', cat:'media', desc:'Send voice note (OGG format). Required: chat_id, voice.', sample:'{"chat_id":"","voice":""}' },
+    { method:'sendVideoNote', cat:'media', desc:'Send video note (square video). Required: chat_id, video_note.', sample:'{"chat_id":"","video_note":""}' },
+    { method:'sendMediaGroup', cat:'media', desc:'Send group of media. Required: chat_id, media (array).', sample:'{"chat_id":"","media":[{"type":"photo","media":"URL"}]}' },
+    { method:'sendLocation', cat:'msg', desc:'Send location. Required: chat_id, latitude, longitude.', sample:'{"chat_id":"","latitude":0,"longitude":0}' },
+    { method:'sendVenue', cat:'msg', desc:'Send venue. Required: chat_id, latitude, longitude, title, address.', sample:'{"chat_id":"","latitude":0,"longitude":0,"title":"","address":""}' },
+    { method:'sendContact', cat:'msg', desc:'Send contact. Required: chat_id, phone_number, first_name.', sample:'{"chat_id":"","phone_number":"","first_name":""}' },
+    { method:'sendDice', cat:'msg', desc:'Send dice/game emoji. Required: chat_id. Optional: emoji (🎲🎯🏀⚽🎰).', sample:'{"chat_id":"","emoji":"🎲"}' },
+    { method:'sendPoll', cat:'msg', desc:'Send a poll. Required: chat_id, question, options.', sample:'{"chat_id":"","question":"?","options":["A","B"]}' },
+    { method:'sendChatAction', cat:'msg', desc:'Send chat action (typing, etc.). Required: chat_id, action.', sample:'{"chat_id":"","action":"typing"}' },
+    { method:'sendSticker', cat:'media', desc:'Send sticker. Required: chat_id, sticker (file_id or URL).', sample:'{"chat_id":"","sticker":""}' },
+    { method:'setMessageReaction', cat:'msg', desc:'Set reaction on a message.', sample:'{"chat_id":"","message_id":0,"reaction":[{"type":"emoji","emoji":"👍"}]}' },
+    // User
+    { method:'getUserProfilePhotos', cat:'user', desc:'Get a list of profile pictures. Required: user_id.', sample:'{"user_id":0}' },
+    { method:'getUserChatBoosts', cat:'user', desc:'Get boosts applied to a chat by a user.', sample:'{"chat_id":"","user_id":0}' },
+    // File
+    { method:'getFile', cat:'file', desc:'Get file info for download. Required: file_id.', sample:'{"file_id":""}' },
+    // Chat member
+    { method:'banChatMember', cat:'admin', desc:'Ban user from group/channel. Required: chat_id, user_id.', sample:'{"chat_id":"","user_id":0}' },
+    { method:'unbanChatMember', cat:'admin', desc:'Unban user. Required: chat_id, user_id.', sample:'{"chat_id":"","user_id":0,"only_if_banned":true}' },
+    { method:'restrictChatMember', cat:'admin', desc:'Restrict member permissions. Required: chat_id, user_id, permissions.', sample:'{"chat_id":"","user_id":0,"permissions":{"can_send_messages":false}}' },
+    { method:'promoteChatMember', cat:'admin', desc:'Promote member to admin. Required: chat_id, user_id.', sample:'{"chat_id":"","user_id":0,"can_manage_chat":true}' },
+    { method:'setChatAdministratorCustomTitle', cat:'admin', desc:'Set custom title for admin.', sample:'{"chat_id":"","user_id":0,"custom_title":"Mod"}' },
+    { method:'banChatSenderChat', cat:'admin', desc:'Ban channel from group. Required: chat_id, sender_chat_id.', sample:'{"chat_id":"","sender_chat_id":0}' },
+    { method:'unbanChatSenderChat', cat:'admin', desc:'Unban channel from group.', sample:'{"chat_id":"","sender_chat_id":0}' },
+    // Permissions / invite
+    { method:'setChatPermissions', cat:'admin', desc:'Set default chat permissions.', sample:'{"chat_id":"","permissions":{"can_send_messages":true}}' },
+    { method:'exportChatInviteLink', cat:'admin', desc:'Generate new primary invite link.', sample:'{"chat_id":""}' },
+    { method:'createChatInviteLink', cat:'admin', desc:'Create additional invite link.', sample:'{"chat_id":"","member_limit":100}' },
+    { method:'editChatInviteLink', cat:'admin', desc:'Edit invite link.', sample:'{"chat_id":"","invite_link":"","member_limit":50}' },
+    { method:'revokeChatInviteLink', cat:'admin', desc:'Revoke invite link.', sample:'{"chat_id":"","invite_link":""}' },
+    { method:'approveChatJoinRequest', cat:'admin', desc:'Approve join request.', sample:'{"chat_id":"","user_id":0}' },
+    { method:'declineChatJoinRequest', cat:'admin', desc:'Decline join request.', sample:'{"chat_id":"","user_id":0}' },
+    // Chat settings
+    { method:'setChatPhoto', cat:'chat', desc:'Set chat photo. Required: chat_id, photo.', sample:'{"chat_id":"","photo":""}' },
+    { method:'deleteChatPhoto', cat:'chat', desc:'Delete chat photo.', sample:'{"chat_id":""}' },
+    { method:'setChatTitle', cat:'chat', desc:'Set chat title.', sample:'{"chat_id":"","title":"New Title"}' },
+    { method:'setChatDescription', cat:'chat', desc:'Set chat description.', sample:'{"chat_id":"","description":"About this chat"}' },
+    { method:'pinChatMessage', cat:'chat', desc:'Pin message in chat.', sample:'{"chat_id":"","message_id":0}' },
+    { method:'unpinChatMessage', cat:'chat', desc:'Unpin specific message.', sample:'{"chat_id":"","message_id":0}' },
+    { method:'unpinAllChatMessages', cat:'chat', desc:'Unpin all messages.', sample:'{"chat_id":""}' },
+    { method:'leaveChat', cat:'chat', desc:'Bot leaves the chat.', sample:'{"chat_id":""}' },
+    { method:'getChat', cat:'chat', desc:'Get chat info.', sample:'{"chat_id":""}' },
+    { method:'getChatAdministrators', cat:'chat', desc:'Get list of admins.', sample:'{"chat_id":""}' },
+    { method:'getChatMemberCount', cat:'chat', desc:'Get member count.', sample:'{"chat_id":""}' },
+    { method:'getChatMember', cat:'chat', desc:'Get info about a member.', sample:'{"chat_id":"","user_id":0}' },
+    { method:'setChatStickerSet', cat:'chat', desc:'Set group sticker set.', sample:'{"chat_id":"","sticker_set_name":""}' },
+    { method:'deleteChatStickerSet', cat:'chat', desc:'Remove sticker set from group.', sample:'{"chat_id":""}' },
+    // Forum
+    { method:'getForumTopicIconStickers', cat:'forum', desc:'Get list of forum topic icon stickers.', sample:'{}' },
+    { method:'createForumTopic', cat:'forum', desc:'Create a forum topic.', sample:'{"chat_id":"","name":"Topic Name"}' },
+    { method:'editForumTopic', cat:'forum', desc:'Edit forum topic.', sample:'{"chat_id":"","message_thread_id":0,"name":"New Name"}' },
+    { method:'closeForumTopic', cat:'forum', desc:'Close a forum topic.', sample:'{"chat_id":"","message_thread_id":0}' },
+    { method:'reopenForumTopic', cat:'forum', desc:'Reopen a forum topic.', sample:'{"chat_id":"","message_thread_id":0}' },
+    { method:'deleteForumTopic', cat:'forum', desc:'Delete forum topic and its messages.', sample:'{"chat_id":"","message_thread_id":0}' },
+    { method:'unpinAllForumTopicMessages', cat:'forum', desc:'Unpin all messages in a forum topic.', sample:'{"chat_id":"","message_thread_id":0}' },
+    { method:'editGeneralForumTopic', cat:'forum', desc:'Edit the General topic.', sample:'{"chat_id":"","name":"General"}' },
+    { method:'closeGeneralForumTopic', cat:'forum', desc:'Close General topic.', sample:'{"chat_id":""}' },
+    { method:'reopenGeneralForumTopic', cat:'forum', desc:'Reopen General topic.', sample:'{"chat_id":""}' },
+    { method:'hideGeneralForumTopic', cat:'forum', desc:'Hide General topic.', sample:'{"chat_id":""}' },
+    { method:'unhideGeneralForumTopic', cat:'forum', desc:'Unhide General topic.', sample:'{"chat_id":""}' },
+    // Callback / inline
+    { method:'answerCallbackQuery', cat:'cb', desc:'Answer callback query.', sample:'{"callback_query_id":"","text":"Done!"}' },
+    { method:'answerInlineQuery', cat:'cb', desc:'Answer inline query.', sample:'{"inline_query_id":"","results":[]}' },
+    { method:'answerWebAppQuery', cat:'cb', desc:'Answer web app query.', sample:'{"web_app_query_id":"","result":{}}' },
+    // Bot settings
+    { method:'setMyCommands', cat:'bot', desc:'Set bot commands.', sample:'{"commands":[{"command":"start","description":"Start"}]}' },
+    { method:'deleteMyCommands', cat:'bot', desc:'Delete bot commands.', sample:'{}' },
+    { method:'getMyCommands', cat:'bot', desc:'Get current bot commands.', sample:'{}' },
+    { method:'setMyDescription', cat:'bot', desc:'Set bot description.', sample:'{"description":"My bot description"}' },
+    { method:'getMyDescription', cat:'bot', desc:'Get bot description.', sample:'{}' },
+    { method:'setMyShortDescription', cat:'bot', desc:'Set bot short description.', sample:'{"short_description":"Short desc"}' },
+    { method:'getMyShortDescription', cat:'bot', desc:'Get bot short description.', sample:'{}' },
+    { method:'setMyName', cat:'bot', desc:'Set bot name.', sample:'{"name":"My Bot"}' },
+    { method:'getMyName', cat:'bot', desc:'Get bot name.', sample:'{}' },
+    { method:'setChatMenuButton', cat:'bot', desc:'Set menu button for chat.', sample:'{"chat_id":null,"menu_button":{"type":"default"}}' },
+    { method:'getChatMenuButton', cat:'bot', desc:'Get menu button for chat.', sample:'{"chat_id":null}' },
+    { method:'setMyDefaultAdministratorRights', cat:'bot', desc:'Set default admin rights.', sample:'{"rights":{"is_anonymous":false}}' },
+    { method:'getMyDefaultAdministratorRights', cat:'bot', desc:'Get default admin rights.', sample:'{}' },
+    // Edit messages
+    { method:'editMessageText', cat:'edit', desc:'Edit text of a message.', sample:'{"chat_id":"","message_id":0,"text":"Updated text"}' },
+    { method:'editMessageCaption', cat:'edit', desc:'Edit media caption.', sample:'{"chat_id":"","message_id":0,"caption":"New caption"}' },
+    { method:'editMessageMedia', cat:'edit', desc:'Edit media in a message.', sample:'{"chat_id":"","message_id":0,"media":{"type":"photo","media":""}}' },
+    { method:'editMessageReplyMarkup', cat:'edit', desc:'Edit inline keyboard.', sample:'{"chat_id":"","message_id":0,"reply_markup":{"inline_keyboard":[]}}' },
+    { method:'stopPoll', cat:'edit', desc:'Stop a poll.', sample:'{"chat_id":"","message_id":0}' },
+    { method:'deleteMessage', cat:'edit', desc:'Delete a message.', sample:'{"chat_id":"","message_id":0}' },
+    { method:'deleteMessages', cat:'edit', desc:'Delete multiple messages (1-100).', sample:'{"chat_id":"","message_ids":[0]}' },
+    // Stickers
+    { method:'getStickerSet', cat:'sticker', desc:'Get sticker set by name.', sample:'{"name":"sticker_set_name"}' },
+    { method:'getCustomEmojiStickers', cat:'sticker', desc:'Get custom emoji stickers.', sample:'{"custom_emoji_ids":[""]}' },
+    { method:'uploadStickerFile', cat:'sticker', desc:'Upload sticker file.', sample:'{"user_id":0,"sticker":{},"sticker_format":"static"}' },
+    { method:'createNewStickerSet', cat:'sticker', desc:'Create new sticker set.', sample:'{"user_id":0,"name":"my_stickers","title":"My Stickers","stickers":[]}' },
+    { method:'addStickerToSet', cat:'sticker', desc:'Add sticker to existing set.', sample:'{"user_id":0,"name":"set_name","sticker":{}}' },
+    { method:'setStickerPositionInSet', cat:'sticker', desc:'Move sticker in set.', sample:'{"sticker":"file_id","position":0}' },
+    { method:'deleteStickerFromSet', cat:'sticker', desc:'Delete sticker from set.', sample:'{"sticker":"file_id"}' },
+    { method:'setStickerEmojiList', cat:'sticker', desc:'Set emoji list for sticker.', sample:'{"sticker":"file_id","emoji_list":["😀"]}' },
+    { method:'setStickerKeywords', cat:'sticker', desc:'Set search keywords for sticker.', sample:'{"sticker":"file_id","keywords":["funny"]}' },
+    { method:'setStickerSetTitle', cat:'sticker', desc:'Set sticker set title.', sample:'{"name":"set_name","title":"New Title"}' },
+    { method:'setStickerSetThumbnail', cat:'sticker', desc:'Set sticker set thumbnail.', sample:'{"name":"set_name","user_id":0}' },
+    { method:'deleteStickerSet', cat:'sticker', desc:'Delete a sticker set.', sample:'{"name":"set_name"}' },
+    // Payments
+    { method:'sendInvoice', cat:'pay', desc:'Send invoice.', sample:'{"chat_id":"","title":"","description":"","payload":"","provider_token":"","currency":"USD","prices":[{"label":"","amount":100}]}' },
+    { method:'createInvoiceLink', cat:'pay', desc:'Create invoice link.', sample:'{"title":"","description":"","payload":"","provider_token":"","currency":"USD","prices":[{"label":"","amount":100}]}' },
+    { method:'answerShippingQuery', cat:'pay', desc:'Answer shipping query.', sample:'{"shipping_query_id":"","ok":true}' },
+    { method:'answerPreCheckoutQuery', cat:'pay', desc:'Answer pre-checkout query.', sample:'{"pre_checkout_query_id":"","ok":true}' },
+    { method:'refundStarPayment', cat:'pay', desc:'Refund Telegram Stars payment.', sample:'{"user_id":0,"telegram_payment_charge_id":""}' },
+    { method:'getStarTransactions', cat:'pay', desc:'Get star transaction log.', sample:'{}' },
+    // Games
+    { method:'sendGame', cat:'game', desc:'Send a game.', sample:'{"chat_id":"","game_short_name":""}' },
+    { method:'setGameScore', cat:'game', desc:'Set game score.', sample:'{"user_id":0,"score":100,"chat_id":"","message_id":0}' },
+    { method:'getGameHighScores', cat:'game', desc:'Get game high scores.', sample:'{"user_id":0,"chat_id":"","message_id":0}' },
+    // Webhook
+    { method:'getWebhookInfo', cat:'wh', desc:'Get current webhook info.', sample:'{}' },
+    { method:'setWebhook', cat:'wh', desc:'Set webhook URL.', sample:'{"url":"https://your-domain.com/webhook/TOKEN"}' },
+    { method:'deleteWebhook', cat:'wh', desc:'Remove webhook (switch to getUpdates).', sample:'{}' },
+    { method:'getUpdates', cat:'wh', desc:'Get pending updates (conflicts with webhook!).', sample:'{"offset":0,"limit":10}' },
+];
+
+const CAT_COLORS = {
+    core:'tag-blue', msg:'tag-blue', media:'tag-purple', user:'tag-green',
+    file:'tag-green', admin:'tag-red', chat:'tag-amber', forum:'tag-purple',
+    cb:'tag-blue', bot:'tag-green', edit:'tag-amber', sticker:'tag-purple',
+    pay:'tag-amber', game:'tag-purple', wh:'tag-red'
+};
+
+function initMethodList() {
+    renderMethodList('');
+    document.getElementById('methodSearch')?.addEventListener('input', function() {
+        renderMethodList(this.value.trim().toLowerCase());
+    });
+}
+
+function renderMethodList(query) {
+    const wrap = document.getElementById('methodListWrap');
+    if (!wrap) return;
+    const filtered = query ? TG_METHODS.filter(m => m.method.toLowerCase().includes(query) || m.cat.includes(query)) : TG_METHODS;
+    wrap.innerHTML = filtered.map(m => `
+        <button class="method-btn${currentMethodSelected === m.method ? ' active' : ''}" data-method="${m.method}" data-sample='${m.sample || '{}'}' data-desc="${escHtml(m.desc)}">
+            ${m.method}<span class="cat-label tag ${CAT_COLORS[m.cat] || 'tag-blue'}">${m.cat}</span>
+        </button>`).join('');
+
+    wrap.querySelectorAll('.method-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            currentMethodSelected = btn.dataset.method;
+            document.getElementById('apiMethodTitle').textContent = btn.dataset.method;
+            document.getElementById('apiDesc').textContent = btn.dataset.desc || '';
+            const sample = btn.dataset.sample || '{}';
+            try {
+                document.getElementById('apiParams').value = JSON.stringify(JSON.parse(sample), null, 2);
+            } catch (_) {
+                document.getElementById('apiParams').value = sample;
+            }
+            wrap.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        });
+    });
+}
+
+document.getElementById('runApiBtn')?.addEventListener('click', async () => {
+    if (!currentMethodSelected) { log('Select a method first', 'err'); return; }
+    const raw = document.getElementById('apiParams')?.value || '{}';
+    let params;
+    try { params = JSON.parse(raw); } catch (e) { log('Invalid JSON: ' + e.message, 'err'); return; }
+
+    const btn = document.getElementById('runApiBtn');
+    btn.innerHTML = '<span class="spin"></span> EXECUTING...';
+    btn.disabled = true;
+
+    try {
+        const r = await tg(currentMethodSelected, params);
+        document.getElementById('apiResult').innerHTML = syntaxHighlight(r);
+        log(`${currentMethodSelected} → ${r.ok ? 'OK' : 'FAIL'}`, r.ok ? 'ok' : 'err');
+    } catch (e) {
+        document.getElementById('apiResult').textContent = 'Error: ' + e.message;
+        log('API error: ' + e.message, 'err');
+    } finally {
+        btn.innerHTML = '▶ EXECUTE';
+        btn.disabled = false;
+    }
+});
+
+document.getElementById('copyResultBtn')?.addEventListener('click', () => {
+    const txt = document.getElementById('apiResult')?.textContent;
+    if (txt) navigator.clipboard.writeText(txt).then(() => log('Result copied to clipboard', 'ok'));
+});
+
+// ════════════════════════════════════════════════════════════
+//  BOTS MANAGEMENT
+// ════════════════════════════════════════════════════════════
+function loadBots() {
+    try { const s = localStorage.getItem('tg_admin_bots_v3'); if (s) botsDB = JSON.parse(s); } catch (_) {}
+}
+function saveBots() {
+    localStorage.setItem('tg_admin_bots_v3', JSON.stringify(botsDB));
+    renderBotSelector();
+    renderBotsList();
+}
+
+function renderBotSelector() {
+    const sel = document.getElementById('botSelector');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">-- Select Bot --</option>';
+    botsDB.forEach((b, i) => {
+        const opt = document.createElement('option');
+        opt.value = i;
+        opt.textContent = `${b.name || 'Bot'} (${b.token.substring(0, 14)}...)`;
+        if (i === currentBotIdx) opt.selected = true;
+        sel.appendChild(opt);
+    });
+}
+
+function renderBotsList() {
+    const c = document.getElementById('botsListContainer');
+    if (!c) return;
+    if (!botsDB.length) { c.innerHTML = '<span class="tag tag-blue">No bots added yet</span>'; return; }
+    c.innerHTML = botsDB.map((b, i) => `
+        <div class="bot-card${currentBotIdx === i ? ' sel' : ''}" onclick="selectBotCard(${i})">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <strong>${escHtml(b.name || 'Unnamed')} ${currentBotIdx === i ? '<span class="tag tag-green" style="font-size:.6rem;">ACTIVE</span>' : ''}</strong>
+                <button onclick="event.stopPropagation(); removeBot(${i})" class="btn btn-danger btn-sm">REMOVE</button>
+            </div>
+            <div style="font-size:.68rem; color:var(--c-muted); margin-top:4px;">${b.token.substring(0, 26)}...</div>
+            <div style="font-size:.65rem; color:#3a6a94;">Owner: ${b.ownerId || 'N/A'} · Added: ${new Date(b.addedAt).toLocaleDateString()}</div>
+        </div>`).join('');
+}
+
+window.selectBotCard = function(i) {
+    currentBotIdx = i;
+    const b = botsDB[i];
+    if (!b) return;
+    document.getElementById('currentBotInfo').innerHTML = `
+        <div style="margin-bottom:8px;"><strong style="color:var(--c-accent);">@${escHtml(b.username || b.name)}</strong></div>
+        <div style="font-size:.78rem; color:var(--c-muted); line-height:2; font-family:monospace;">
+            Token: ${escHtml(b.token.substring(0, 30))}...<br>
+            Owner ID: ${escHtml(b.ownerId || 'N/A')}<br>
+            Added: ${new Date(b.addedAt).toLocaleString()}
+        </div>`;
+    renderBotsList();
+    renderBotSelector();
+};
+
+window.removeBot = function(i) {
+    if (!confirm('Remove this bot?')) return;
+    botsDB.splice(i, 1);
+    if (currentBotIdx === i) { currentBotIdx = -1; BOT_TOKEN = null; location.reload(); }
+    else if (currentBotIdx > i) currentBotIdx--;
+    saveBots();
+};
+
+document.getElementById('confirmAddBotBtn')?.addEventListener('click', async () => {
+    const newToken = document.getElementById('newBotToken')?.value.trim();
+    const newName  = document.getElementById('newBotName')?.value.trim() || 'Unnamed';
+    if (!newToken) { showMsg('addBotMsg', 'Token required', false); return; }
+
+    const btn = document.getElementById('confirmAddBotBtn');
+    btn.innerHTML = '<span class="spin"></span> VERIFYING...';
+    btn.disabled = true;
+
+    try {
+        const r = await api('/api/bot-info', { botToken: newToken });
+        if (!r.ok) throw new Error('Invalid token: ' + (r.error || r.description));
+        botsDB.push({ id: Date.now(), token: newToken, name: newName, ownerId: OWNER_ID, username: r.result.username, addedAt: new Date().toISOString() });
+        saveBots();
+        showMsg('addBotMsg', `✅ Added @${r.result.username}`, true);
+        document.getElementById('newBotToken').value = '';
+        document.getElementById('newBotName').value  = '';
+        log(`Bot @${r.result.username} added`, 'ok');
+    } catch (e) {
+        showMsg('addBotMsg', '❌ ' + e.message, false);
+    } finally {
+        btn.innerHTML = '+ VERIFY & ADD';
+        btn.disabled = false;
+    }
+});
+
+document.getElementById('getBotInfoBtn')?.addEventListener('click', async () => {
+    if (currentBotIdx < 0) return;
+    const token = botsDB[currentBotIdx]?.token;
+    if (!token) return;
+    const r = await api('/api/bot-info', { botToken: token });
+    log(r.ok ? `@${r.result.username} — ${r.result.first_name}` : 'Error: ' + r.description, r.ok ? 'ok' : 'err');
+});
+
+document.getElementById('switchBotBtn')?.addEventListener('click', () => {
+    if (currentBotIdx < 0 || !botsDB[currentBotIdx]) { log('Select a bot first', 'err'); return; }
+    const b = botsDB[currentBotIdx];
+    if (confirm(`Switch to @${b.username || b.name}?`)) {
+        localStorage.setItem('tg_auto_login', JSON.stringify({ token: b.token, ownerId: b.ownerId }));
+        location.reload();
+    }
+});
+
+document.getElementById('botSelector')?.addEventListener('change', function() {
+    const i = parseInt(this.value);
+    if (!isNaN(i)) selectBotCard(i);
+});
+
+document.getElementById('addBotBtn')?.addEventListener('click', () => {
+    document.querySelector('[data-tab="bots"]')?.click();
+});
+
+// ════════════════════════════════════════════════════════════
+//  SETTINGS TAB
+// ════════════════════════════════════════════════════════════
+document.getElementById('autoWebhookBtn')?.addEventListener('click', () => {
+    const url = `${window.location.origin}/webhook/${BOT_TOKEN}`;
+    document.getElementById('webhookUrl').value = url;
+    log(`Auto-filled webhook: ${url}`, 'ok');
+});
+
+document.getElementById('setWebhookBtn')?.addEventListener('click', async () => {
+    const url = document.getElementById('webhookUrl')?.value.trim();
+    if (!url) return;
+    const r = await api('/api/set-webhook', { botToken: BOT_TOKEN, url });
+    const el = document.getElementById('webhookResult');
+    el.style.display = 'block';
+    el.innerHTML = syntaxHighlight(r);
+    log(r.ok ? `Webhook set: ${url}` : 'Webhook error: ' + r.description, r.ok ? 'ok' : 'err');
+});
+
+document.getElementById('delWebhookBtn')?.addEventListener('click', async () => {
+    const r = await api('/api/delete-webhook', { botToken: BOT_TOKEN });
+    log(r.ok ? 'Webhook removed' : 'Error: ' + r.description, r.ok ? 'ok' : 'err');
+});
+
+document.getElementById('chkWebhookBtn')?.addEventListener('click', async () => {
+    const r = await api('/api/webhook-info', { botToken: BOT_TOKEN });
+    const el = document.getElementById('webhookResult');
+    el.style.display = 'block';
+    el.innerHTML = syntaxHighlight(r);
+    log(`Webhook: ${r.result?.url || 'none'}`, 'ok');
+});
+
+document.getElementById('setCommandsBtn')?.addEventListener('click', async () => {
+    const txt = document.getElementById('commandsInput')?.value || '';
+    const cmds = txt.split('\n').filter(l => l.trim()).map(l => {
+        const parts = l.split('-');
+        if (parts.length < 2) return null;
+        return { command: parts[0].trim().replace(/^\//, ''), description: parts.slice(1).join('-').trim() };
+    }).filter(Boolean);
+    if (!cmds.length) { showMsg('commandsResult', 'No valid commands (format: command - description)', false); return; }
+    const r = await api('/api/set-commands', { botToken: BOT_TOKEN, commands: cmds });
+    showMsg('commandsResult', r.ok ? `✅ ${cmds.length} commands set` : '❌ ' + (r.description || r.error), r.ok);
+    log(r.ok ? 'Commands updated' : 'Commands failed: ' + r.description, r.ok ? 'ok' : 'err');
+});
+
+document.getElementById('setBotNameBtn')?.addEventListener('click', async () => {
+    const name = document.getElementById('botNameInput')?.value.trim();
+    if (!name) return;
+    const r = await tg('setMyName', { name });
+    showMsg('profileResult', r.ok ? '✅ Name set' : '❌ ' + r.description, r.ok);
+});
+
+document.getElementById('setBotDescBtn')?.addEventListener('click', async () => {
+    const desc  = document.getElementById('botDescInput')?.value.trim();
+    const short = document.getElementById('botShortDesc')?.value.trim();
+    if (desc)  await tg('setMyDescription',      { description: desc });
+    if (short) await tg('setMyShortDescription', { short_description: short });
+    showMsg('profileResult', '✅ Description updated', true);
+});
+
+document.getElementById('getBotDescBtn')?.addEventListener('click', async () => {
+    const [d, s] = await Promise.all([tg('getMyDescription'), tg('getMyShortDescription')]);
+    showMsg('profileResult', `Desc: ${d.result?.description || 'none'} | Short: ${s.result?.short_description || 'none'}`, true);
+});
+
+document.getElementById('setChatTitleBtn')?.addEventListener('click', async () => {
+    const chat  = document.getElementById('chatSettingsId')?.value.trim();
+    const title = document.getElementById('chatTitle')?.value.trim();
+    if (!chat || !title) return;
+    const r = await tg('setChatTitle', { chat_id: chat, title });
+    showMsg('chatSettingsResult', r.ok ? '✅ Title set' : '❌ ' + r.description, r.ok);
+});
+
+document.getElementById('setChatDescBtn')?.addEventListener('click', async () => {
+    const chat = document.getElementById('chatSettingsId')?.value.trim();
+    const desc = document.getElementById('chatDesc')?.value.trim();
+    if (!chat || !desc) return;
+    const r = await tg('setChatDescription', { chat_id: chat, description: desc });
+    showMsg('chatSettingsResult', r.ok ? '✅ Description set' : '❌ ' + r.description, r.ok);
+});
+
+document.getElementById('exportInviteBtn')?.addEventListener('click', async () => {
+    const chat = document.getElementById('chatSettingsId')?.value.trim();
+    if (!chat) return;
+    const r = await tg('exportChatInviteLink', { chat_id: chat });
+    if (r.ok) {
+        showMsg('chatSettingsResult', r.result, true);
+        navigator.clipboard?.writeText(r.result);
+    } else {
+        showMsg('chatSettingsResult', '❌ ' + r.description, false);
+    }
+});
+
+// ════════════════════════════════════════════════════════════
+//  LOGS TAB
+// ════════════════════════════════════════════════════════════
+document.getElementById('refreshStatsBtn')?.addEventListener('click', () => { loadDashboard(); updateUptime(); });
+document.getElementById('clearLogBtn')?.addEventListener('click', () => {
+    const el = document.getElementById('logArea');
+    if (el) el.innerHTML = '<div class="log-line"><span class="log-ts">[SYS]</span> Log cleared</div>';
+});
+
+// ════════════════════════════════════════════════════════════
+//  DASHBOARD BUTTONS
+// ════════════════════════════════════════════════════════════
+document.getElementById('refreshDashBtn')?.addEventListener('click', loadDashboard);
+document.getElementById('refreshBlockedBtn')?.addEventListener('click', loadBlockedUsers);
+
+// ════════════════════════════════════════════════════════════
+//  TABS
+// ════════════════════════════════════════════════════════════
+function initTabs() {
+    document.querySelectorAll('.nav-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            const id = tab.getAttribute('data-tab');
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            tab.classList.add('active');
+            document.getElementById(`tab-${id}`)?.classList.add('active');
+
+            // Lazy load tab data
+            if (id === 'users')     { loadUsers(1); loadBanList(); }
+            if (id === 'security')  { loadCoAdmins(); loadBanList(); }
+            if (id === 'bots')      { renderBotsList(); }
+            if (id === 'broadcast') { loadDashboard(); }
+            if (id === 'dashboard') { loadDashboard(); }
+            if (id === 'api')       { renderMethodList(document.getElementById('methodSearch')?.value || ''); }
+        });
+    });
+}
+
+// ════════════════════════════════════════════════════════════
+//  LOGOUT
+// ════════════════════════════════════════════════════════════
+document.getElementById('logoutBtn')?.addEventListener('click', () => {
+    if (uptimeTimer) clearInterval(uptimeTimer);
+    SESSION = null; BOT_TOKEN = null;
+    location.reload();
+});
+
+// ════════════════════════════════════════════════════════════
+//  AUTO-LOGIN
+// ════════════════════════════════════════════════════════════
+function checkAutoLogin() {
+    try {
+        const s = localStorage.getItem('tg_auto_login');
+        if (s) {
+            const d = JSON.parse(s);
+            localStorage.removeItem('tg_auto_login');
+            document.getElementById('botTokenInput').value = d.token || '';
+            document.getElementById('ownerIdInput').value  = d.ownerId || '';
+            setTimeout(() => document.getElementById('sendOtpBtn')?.click(), 300);
+        }
+    } catch (_) {}
+}
+
+// ════════════════════════════════════════════════════════════
+//  PARTICLES
+// ════════════════════════════════════════════════════════════
+for (let i = 0; i < 60; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const sz = Math.random() * 4 + 1;
+    p.style.cssText = `width:${sz}px;height:${sz}px;left:${Math.random()*100}%;animation-delay:${Math.random()*14}s;animation-duration:${12+Math.random()*16}s;`;
+    document.getElementById('particles').appendChild(p);
+}
+
+// ════════════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════════════
+loadBots();
+checkAutoLogin();
+</script>
+</body>
+</html>
